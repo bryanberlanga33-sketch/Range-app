@@ -10,46 +10,43 @@ import {
   Screen,
   SectionTitle,
 } from '@/components/ui'
-import { MapFence } from '@/components/MapFence'
-import type { GeoPoint } from '@/components/map/types'
-import { BaseRecord, useCollection } from '@/store/useCollection'
+import { FenceDrawer } from '@/components/FenceDrawer'
+import type { LatLng } from '@/components/map/types'
+import { useCollection } from '@/store/useCollection'
+import { locationVertices, type LocationRecord } from '@/models'
 import { colors } from '@/theme'
-
-interface LocationRecord extends BaseRecord {
-  name: string
-  notes: string
-  points: GeoPoint[]
-  /** Legacy free-text coordinates from earlier app versions. */
-  coordinates?: string
-}
 
 export default function LocationScreen() {
   const { items, add, remove } = useCollection<LocationRecord>('locations')
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
-  const [points, setPoints] = useState<GeoPoint[]>([])
+  const [vertices, setVertices] = useState<LatLng[]>([])
   const [error, setError] = useState<string | null>(null)
 
   function handleAdd() {
     const n = name.trim()
     if (!n) {
-      setError('Please name the location.')
+      setError('Please name the polygon (pasture or property).')
       return
     }
-    add({ name: n, notes: notes.trim(), points })
+    if (vertices.length < 3) {
+      setError('Add at least 3 boundary points to form the polygon.')
+      return
+    }
+    add({ name: n, notes: notes.trim(), vertices })
     setName('')
     setNotes('')
-    setPoints([])
+    setVertices([])
     setError(null)
   }
 
   return (
     <Screen>
       <Card>
-        <SectionTitle>New location</SectionTitle>
+        <SectionTitle>New property polygon</SectionTitle>
         <LabeledInput
-          label="Name"
-          placeholder="e.g. Cedar Ridge Paddock"
+          label="Polygon name"
+          placeholder="e.g. Cedar Ridge Pasture"
           value={name}
           onChangeText={setName}
         />
@@ -59,12 +56,12 @@ export default function LocationScreen() {
             Property fence
           </Text>
           <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18 }}>
-            Tap the map to outline the pasture or property. Points connect into a
-            polygon you can reuse for point mapping.
+            Tap the map to drop guide points that outline the pasture or property.
+            The points connect into a named polygon you can select in journal entries.
           </Text>
         </View>
 
-        <MapFence points={points} onChange={setPoints} />
+        <FenceDrawer vertices={vertices} onChange={setVertices} />
 
         <LabeledInput
           label="Notes (optional)"
@@ -76,20 +73,22 @@ export default function LocationScreen() {
           style={{ minHeight: 70, textAlignVertical: 'top' }}
         />
         {error && <ErrorText>{error}</ErrorText>}
-        <PrimaryButton title="Save location" onPress={handleAdd} />
+        <PrimaryButton title="Save polygon" onPress={handleAdd} />
       </Card>
 
       <View style={{ gap: 12 }}>
-        <SectionTitle>Locations ({items.length})</SectionTitle>
+        <SectionTitle>Polygons ({items.length})</SectionTitle>
         {items.length === 0 ? (
-          <EmptyState>No locations yet. Add a pasture, paddock, or point of interest.</EmptyState>
+          <EmptyState>
+            No polygons yet. Outline a pasture or property on the map and name it.
+          </EmptyState>
         ) : (
           items.map((loc) => {
-            const pts = loc.points ?? []
-            const fenceMeta =
-              pts.length > 0
-                ? `${pts.length} boundary point${pts.length === 1 ? '' : 's'}${
-                    pts.length >= 3 ? ' · polygon' : ''
+            const count = locationVertices(loc).length
+            const meta =
+              count > 0
+                ? `${count} boundary point${count === 1 ? '' : 's'}${
+                    count >= 3 ? ' · polygon' : ''
                   }`
                 : loc.coordinates || undefined
             return (
@@ -98,7 +97,7 @@ export default function LocationScreen() {
                 emoji="📍"
                 title={loc.name}
                 subtitle={loc.notes || undefined}
-                meta={fenceMeta}
+                meta={meta}
                 onRemove={() => remove(loc.id)}
               />
             )

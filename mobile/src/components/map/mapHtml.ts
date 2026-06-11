@@ -1,15 +1,21 @@
 /**
- * Self-contained Leaflet map document used by both the web (`<iframe srcDoc>`)
- * and native (`react-native-webview`) implementations of MapFence.
+ * Self-contained Leaflet map document shared by the web (`<iframe srcDoc>`) and
+ * native (`react-native-webview`) implementations of MapCanvas.
  *
  * Bridge protocol (messages are JSON strings):
- *  - page -> host:  { type: 'ready' }                       once the map is initialized
- *  - page -> host:  { type: 'add', lat, lng }               when the user taps the map
- *  - host -> page:  window.__renderPoints("<json point[]>") to (re)draw markers + polygon
+ *  - page -> host:  { type: 'ready' }                 once the map is initialized
+ *  - page -> host:  { type: 'add', lat, lng }          when the user taps the map
+ *  - host -> page:  window.__render("<json>")          to (re)draw the scene
+ *
+ * Render payload:
+ *  {
+ *    polygon:    [[lat,lng], ...],          // filled boundary polygon
+ *    vertices:   [[lat,lng], ...],          // small numbered guide markers
+ *    dataPoints: [{ lat, lng, label }, ...] // labeled pins
+ *  }
  *
  * The page emits to `window.ReactNativeWebView` (native) when present, otherwise
- * to `window.parent` (web iframe). The host pushes point updates via postMessage
- * (web) or injectJavaScript calling `window.__renderPoints` (native).
+ * to `window.parent` (web iframe).
  */
 export const MAP_HTML = `<!doctype html>
 <html>
@@ -25,6 +31,11 @@ export const MAP_HTML = `<!doctype html>
         padding: 2px 6px; font: 600 12px system-ui, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,.3);
       }
       .point-label::before { border-top-color: #3f5a26; }
+      .vertex-label {
+        background: transparent; border: none; box-shadow: none;
+        color: #3f5a26; font: 700 11px system-ui, sans-serif;
+      }
+      .vertex-label::before { display: none; }
     </style>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   </head>
@@ -47,58 +58,71 @@ export const MAP_HTML = `<!doctype html>
           attribution: '&copy; OpenStreetMap contributors',
         }).addTo(map);
 
-        var markers = [];
-        var shape = null;
+        var layers = [];
 
         map.on('click', function (e) {
           emit({ type: 'add', lat: e.latlng.lat, lng: e.latlng.lng });
         });
 
-        window.__renderPoints = function (json) {
-          var points;
-          try { points = JSON.parse(json); } catch (err) { return; }
-          if (!Array.isArray(points)) return;
+        window.__render = function (json) {
+          var data;
+          try { data = JSON.parse(json); } catch (err) { return; }
+          if (!data) return;
 
-          markers.forEach(function (m) { map.removeLayer(m); });
-          markers = [];
-          if (shape) { map.removeLayer(shape); shape = null; }
+          layers.forEach(function (l) { map.removeLayer(l); });
+          layers = [];
 
-          var latlngs = points.map(function (p) { return [p.lat, p.lng]; });
+          var polygon = data.polygon || [];
+          var vertices = data.vertices || [];
+          var dataPoints = data.dataPoints || [];
 
-          points.forEach(function (p, i) {
-            var marker = L.marker([p.lat, p.lng]).addTo(map);
-            marker.bindTooltip(p.name || ('Point ' + (i + 1)), {
-              permanent: true,
-              direction: 'top',
-              className: 'point-label',
-            });
-            markers.push(marker);
-          });
-
-          if (latlngs.length >= 3) {
-            shape = L.polygon(latlngs, {
-              color: '#3f5a26',
-              weight: 2,
-              fillColor: '#7a9a4a',
-              fillOpacity: 0.3,
-            }).addTo(map);
-          } else if (latlngs.length === 2) {
-            shape = L.polyline(latlngs, { color: '#3f5a26', weight: 2 }).addTo(map);
+          if (polygon.length >= 3) {
+            layers.push(
+              L.polygon(polygon, {
+                color: '#3f5a26', weight: 2, fillColor: '#7a9a4a', fillOpacity: 0.3,
+              }).addTo(map)
+            );
+          } else if (polygon.length === 2) {
+            layers.push(L.polyline(polygon, { color: '#3f5a26', weight: 2 }).addTo(map));
           }
 
-          if (latlngs.length >= 1) {
-            try { map.fitBounds(L.latLngBounds(latlngs).pad(0.5), { maxZoom: 16 }); } catch (err) {}
+          vertices.forEach(function (v, i) {
+            var marker = L.circleMarker(v, {
+              radius: 6, color: '#3f5a26', weight: 2, fillColor: '#ffffff', fillOpacity: 1,
+            }).addTo(map);
+            marker.bindTooltip(String(i + 1), {
+              permanent: true, direction: 'center', className: 'vertex-label',
+            });
+            layers.push(marker);
+          });
+
+          dataPoints.forEach(function (p) {
+            var marker = L.marker([p.lat, p.lng]).addTo(map);
+            if (p.label) {
+              marker.bindTooltip(p.label, {
+                permanent: true, direction: 'top', className: 'point-label',
+              });
+            }
+            layers.push(marker);
+          });
+
+          // Fit to the boundary (polygon + vertices) so adding data points
+          // inside it does not shift the view.
+          var fitCoords = polygon.concat(vertices);
+          if (fitCoords.length === 0) {
+            fitCoords = dataPoints.map(function (p) { return [p.lat, p.lng]; });
+          }
+          if (fitCoords.length >= 1) {
+            try { map.fitBounds(L.latLngBounds(fitCoords).pad(0.5), { maxZoom: 16 }); } catch (err) {}
           }
         };
 
-        // Host -> page channel for the web iframe (native uses injectJavaScript).
         window.addEventListener('message', function (ev) {
           if (typeof ev.data === 'string') {
-            window.__renderPoints(ev.data);
+            window.__render(ev.data);
           }
         });
 
-        // Give Leaflet a tick to lay out before announcing readiness.
         setTimeout(function () {
           map.invalidateSize();
           emit({ type: 'ready' });

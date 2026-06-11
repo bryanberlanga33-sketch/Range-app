@@ -1,11 +1,11 @@
-export interface GeoPoint {
-  id: string
-  name: string
+export interface LatLng {
   lat: number
   lng: number
 }
 
-export interface MapFenceProps {
-  points: GeoPoint[]
-  onChange: (points: GeoPoint[]) => void
+export interface DataPoint {
+  id: string
+  label: string
+  lat: number
+  lng: number
 }
