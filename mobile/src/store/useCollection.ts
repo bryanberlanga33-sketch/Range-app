@@ -69,5 +69,18 @@ export function useCollection<T extends BaseRecord>(storageKey: string) {
     [items, persist],
   )
 
-  return { items, add, remove, loaded }
+  const update = useCallback(
+    (id: string, patch: Partial<T> | ((item: T) => Partial<T>)) => {
+      persist(
+        items.map((item) =>
+          item.id === id
+            ? { ...item, ...(typeof patch === 'function' ? patch(item) : patch) }
+            : item,
+        ),
+      )
+    },
+    [items, persist],
+  )
+
+  return { items, add, remove, update, loaded }
 }

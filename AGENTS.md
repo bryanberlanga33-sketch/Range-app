@@ -25,8 +25,13 @@ are persisted on-device via AsyncStorage (uses `localStorage` when run on web).
   maps to `mobile/src/*`). Add a screen by creating a file there and registering it in
   `src/app/_layout.tsx`.
 - On-device data is stored under AsyncStorage keys `journal-entries`, `locations`,
-  `plant-species`, and `livestock-wildlife`. On web this maps to `localStorage`; clear
-  those keys to reset state during manual testing.
+  `plant-species`, `livestock-herds`, and `wildlife-sightings`. On web this maps to
+  `localStorage`; clear those keys to reset state during manual testing.
+- The Livestock & Wildlife screen is split into two sections: `LivestockSection`
+  (herds — species, head count, per-animal name/tag IDs, pasture assignment, a rotation
+  toggle, and whole-herd pasture moves) and `WildlifeSection` (sightings with a
+  where/when point placed inside a selected polygon). Herd edits use the `update()`
+  helper on `useCollection`.
 - Maps use Leaflet via a shared, platform-split `MapCanvas` (`src/components/map/
   MapCanvas.web.tsx` uses an `<iframe>`, `MapCanvas.tsx` uses `react-native-webview`;
   both render the Leaflet document in `src/components/map/mapHtml.ts`). Leaflet and the

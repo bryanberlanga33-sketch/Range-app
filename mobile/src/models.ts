@@ -2,6 +2,8 @@ import type { BaseRecord } from './store/useCollection'
 import type { DataPoint, LatLng } from './components/map/types'
 import type { ForageValue, PlantCategory } from './data/plantCatalog'
 
+export type { LatLng, DataPoint } from './components/map/types'
+
 export interface LocationRecord extends BaseRecord {
   /** Human-given name for the polygon (pasture / property). */
   name: string
@@ -30,6 +32,39 @@ export interface PlantRecord extends BaseRecord {
   forageValue: ForageValue
   description: string
   imageUrl?: string
+}
+
+export type LivestockSpecies = 'Cattle' | 'Sheep' | 'Goats' | 'Horses'
+
+export type AnimalIdType = 'Name' | 'Tag'
+
+export interface Animal {
+  id: string
+  identifier: string
+  idType: AnimalIdType
+}
+
+export interface Herd extends BaseRecord {
+  name: string
+  species: LivestockSpecies
+  headCount: number
+  /** Pasture/property polygon this herd currently occupies. */
+  pastureId?: string
+  pastureName?: string
+  /** Whether this herd is part of a pasture rotation. */
+  onRotation: boolean
+  /** Optionally identified individuals (by name or tag). */
+  animals: Animal[]
+}
+
+export interface WildlifeSighting extends BaseRecord {
+  species: string
+  count?: string
+  pastureId?: string
+  pastureName?: string
+  /** Where the animal was seen (a point within the polygon). */
+  location?: LatLng
+  notes?: string
 }
 
 /** Resolves a location's polygon vertices, tolerating legacy `points` data. */

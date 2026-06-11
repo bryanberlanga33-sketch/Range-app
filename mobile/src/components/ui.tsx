@@ -97,6 +97,36 @@ export function Badge({
   )
 }
 
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: T[]
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <View style={styles.segmented}>
+      {options.map((option) => {
+        const active = option === value
+        return (
+          <Pressable
+            key={option}
+            accessibilityRole="button"
+            onPress={() => onChange(option)}
+            style={[styles.segment, active && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+              {option}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
     <View style={styles.empty}>
@@ -193,6 +223,19 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   badgeLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  segmented: { flexDirection: 'row', gap: spacing.sm },
+  segment: {
+    flex: 1,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    backgroundColor: '#fdfcf9',
+  },
+  segmentActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  segmentText: { fontWeight: '600', color: colors.muted, fontSize: 13 },
+  segmentTextActive: { color: colors.accentStrong },
   empty: {
     backgroundColor: colors.accentSoft,
     borderRadius: 12,
