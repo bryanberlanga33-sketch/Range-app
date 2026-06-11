@@ -27,3 +27,9 @@ are persisted on-device via AsyncStorage (uses `localStorage` when run on web).
 - On-device data is stored under AsyncStorage keys `journal-entries`, `locations`,
   `plant-species`, and `livestock-wildlife`. On web this maps to `localStorage`; clear
   those keys to reset state during manual testing.
+- The Locations screen embeds a Leaflet map for drawing a property fence polygon
+  (`src/components/MapFence.*`). The map is platform-split: web uses an `<iframe>`
+  (`MapFence.web.tsx`), native uses `react-native-webview` (`MapFence.tsx`), and both
+  share the Leaflet document in `src/components/map/mapHtml.ts`. Leaflet and the
+  OpenStreetMap tiles load from CDNs at runtime, so the map requires network access —
+  it renders blank offline.

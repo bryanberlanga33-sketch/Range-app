@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 import {
   Card,
   EmptyState,
@@ -10,19 +10,24 @@ import {
   Screen,
   SectionTitle,
 } from '@/components/ui'
+import { MapFence } from '@/components/MapFence'
+import type { GeoPoint } from '@/components/map/types'
 import { BaseRecord, useCollection } from '@/store/useCollection'
+import { colors } from '@/theme'
 
 interface LocationRecord extends BaseRecord {
   name: string
-  coordinates: string
   notes: string
+  points: GeoPoint[]
+  /** Legacy free-text coordinates from earlier app versions. */
+  coordinates?: string
 }
 
 export default function LocationScreen() {
   const { items, add, remove } = useCollection<LocationRecord>('locations')
   const [name, setName] = useState('')
-  const [coordinates, setCoordinates] = useState('')
   const [notes, setNotes] = useState('')
+  const [points, setPoints] = useState<GeoPoint[]>([])
   const [error, setError] = useState<string | null>(null)
 
   function handleAdd() {
@@ -31,10 +36,10 @@ export default function LocationScreen() {
       setError('Please name the location.')
       return
     }
-    add({ name: n, coordinates: coordinates.trim(), notes: notes.trim() })
+    add({ name: n, notes: notes.trim(), points })
     setName('')
-    setCoordinates('')
     setNotes('')
+    setPoints([])
     setError(null)
   }
 
@@ -48,12 +53,19 @@ export default function LocationScreen() {
           value={name}
           onChangeText={setName}
         />
-        <LabeledInput
-          label="Coordinates (optional)"
-          placeholder="e.g. 44.8321, -108.7426"
-          value={coordinates}
-          onChangeText={setCoordinates}
-        />
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>
+            Property fence
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18 }}>
+            Tap the map to outline the pasture or property. Points connect into a
+            polygon you can reuse for point mapping.
+          </Text>
+        </View>
+
+        <MapFence points={points} onChange={setPoints} />
+
         <LabeledInput
           label="Notes (optional)"
           placeholder="Water access, fencing, terrain..."
@@ -72,16 +84,25 @@ export default function LocationScreen() {
         {items.length === 0 ? (
           <EmptyState>No locations yet. Add a pasture, paddock, or point of interest.</EmptyState>
         ) : (
-          items.map((loc) => (
-            <RecordItem
-              key={loc.id}
-              emoji="📍"
-              title={loc.name}
-              subtitle={loc.notes || undefined}
-              meta={loc.coordinates || undefined}
-              onRemove={() => remove(loc.id)}
-            />
-          ))
+          items.map((loc) => {
+            const pts = loc.points ?? []
+            const fenceMeta =
+              pts.length > 0
+                ? `${pts.length} boundary point${pts.length === 1 ? '' : 's'}${
+                    pts.length >= 3 ? ' · polygon' : ''
+                  }`
+                : loc.coordinates || undefined
+            return (
+              <RecordItem
+                key={loc.id}
+                emoji="📍"
+                title={loc.name}
+                subtitle={loc.notes || undefined}
+                meta={fenceMeta}
+                onRemove={() => remove(loc.id)}
+              />
+            )
+          })
         )}
       </View>
     </Screen>
