@@ -1,5 +1,6 @@
 import type { BaseRecord } from './store/useCollection'
 import type { DataPoint, LatLng } from './components/map/types'
+import type { ForageValue, PlantCategory } from './data/plantCatalog'
 
 export interface LocationRecord extends BaseRecord {
   /** Human-given name for the polygon (pasture / property). */
@@ -19,6 +20,16 @@ export interface JournalEntry extends BaseRecord {
   locationId?: string
   locationName?: string
   dataPoints: DataPoint[]
+}
+
+export interface PlantRecord extends BaseRecord {
+  speciesId?: string
+  commonName: string
+  scientificName: string
+  category: PlantCategory
+  forageValue: ForageValue
+  description: string
+  imageUrl?: string
 }
 
 /** Resolves a location's polygon vertices, tolerating legacy `points` data. */

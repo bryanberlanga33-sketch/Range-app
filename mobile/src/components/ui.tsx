@@ -81,6 +81,22 @@ export function ErrorText({ children }: { children: ReactNode }) {
   return <Text style={styles.error}>{children}</Text>
 }
 
+export function Badge({
+  label,
+  color,
+  background,
+}: {
+  label: string
+  color: string
+  background: string
+}) {
+  return (
+    <View style={[styles.badge, { backgroundColor: background }]}>
+      <Text style={[styles.badgeLabel, { color }]}>{label}</Text>
+    </View>
+  )
+}
+
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
     <View style={styles.empty}>
@@ -170,6 +186,13 @@ const styles = StyleSheet.create({
   primaryButtonPressed: { backgroundColor: colors.accentStrong },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   error: { color: colors.danger, fontWeight: '600', fontSize: 13 },
+  badge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: 999,
+    alignSelf: 'flex-start',
+  },
+  badgeLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
   empty: {
     backgroundColor: colors.accentSoft,
     borderRadius: 12,

@@ -37,3 +37,9 @@ are persisted on-device via AsyncStorage (uses `localStorage` when run on web).
   points constrained inside it (point-in-polygon check in `src/components/map/geo.ts`).
   Domain records live in `src/models.ts`; `locationVertices()` reads a polygon's
   vertices and tolerates legacy saved data.
+- Plant identification (`PlantIdentifier`) is backed by a curated local catalog in
+  `src/data/plantCatalog.ts` (`identifyPlants(query)` ranks species by name/trait) —
+  there is no live computer-vision call. To wire real photo ID (e.g. Pl@ntNet /
+  iNaturalist vision), replace `identifyPlants` with an API call that maps results
+  onto `PlantSpecies` records. Catalog photos are remote Wikimedia URLs (need network;
+  `PlantImage` falls back to a category emoji on load failure).
