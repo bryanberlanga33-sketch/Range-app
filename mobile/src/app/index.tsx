@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PastureLive } from '@/components/PastureLive'
 import { colors, spacing } from '@/theme'
+
+const CLY_LOGO = require('../../assets/images/cly-logo.png')
 
 interface NavItem {
   href: '/journal' | '/location' | '/plants' | '/wildlife'
@@ -80,10 +82,14 @@ export default function Landing() {
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.kicker}>RANGELAND JOURNAL</Text>
-          <Text style={styles.title}>Find your{'\n'}path</Text>
+          <Image
+            source={CLY_LOGO}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="CLY"
+          />
           <Text style={styles.subtitle}>
-            Track conditions across your property.
+            Your rangeland journal — track conditions across the property.
           </Text>
         </View>
 
@@ -116,17 +122,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   header: { gap: spacing.xs },
-  kicker: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    color: colors.muted,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: colors.text,
-    lineHeight: 38,
+  logo: {
+    width: 210,
+    height: 104,
+    marginLeft: -8,
   },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
   grid: { flexDirection: 'row', gap: spacing.md },
