@@ -22,6 +22,8 @@ export interface JournalEntry extends BaseRecord {
   locationId?: string
   locationName?: string
   dataPoints: DataPoint[]
+  /** Optional property photo attached to the entry. */
+  photoUri?: string
 }
 
 export interface PlantRecord extends BaseRecord {
@@ -32,6 +34,9 @@ export interface PlantRecord extends BaseRecord {
   forageValue: ForageValue
   description: string
   imageUrl?: string
+  /** Pasture/property polygon where this plant was found. */
+  pastureId?: string
+  pastureName?: string
 }
 
 export type LivestockSpecies = 'Cattle' | 'Sheep' | 'Goats' | 'Horses'

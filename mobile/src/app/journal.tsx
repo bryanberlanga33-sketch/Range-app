@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import {
   Card,
   EmptyState,
@@ -18,6 +18,7 @@ import {
   type JournalEntry,
   type LocationRecord,
 } from '@/models'
+import { pickImage } from '@/photo'
 import { colors, spacing } from '@/theme'
 
 function formatDate(ts: number) {
@@ -36,6 +37,7 @@ export default function JournalScreen() {
   const [conditions, setConditions] = useState('')
   const [locationId, setLocationId] = useState<string | null>(null)
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([])
+  const [photoUri, setPhotoUri] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const polygons = useMemo(
@@ -61,6 +63,15 @@ export default function JournalScreen() {
     setDataPoints([])
   }
 
+  async function attachPhoto() {
+    try {
+      const uri = await pickImage()
+      if (uri) setPhotoUri(uri)
+    } catch {
+      setError('Could not open the photo library.')
+    }
+  }
+
   function handleAdd() {
     const t = title.trim()
     const c = conditions.trim()
@@ -78,10 +89,12 @@ export default function JournalScreen() {
       locationId: selected?.id,
       locationName: selected?.name,
       dataPoints: selected ? dataPoints : [],
+      photoUri: photoUri ?? undefined,
     })
     setTitle('')
     setConditions('')
     clearSelection()
+    setPhotoUri(null)
     setError(null)
   }
 
@@ -150,6 +163,30 @@ export default function JournalScreen() {
           />
         )}
 
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>Property photo (optional)</Text>
+          {photoUri ? (
+            <View style={styles.photoRow}>
+              <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setPhotoUri(null)}
+                style={styles.photoRemove}
+              >
+                <Text style={styles.photoRemoveText}>Remove photo</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              onPress={attachPhoto}
+              style={styles.photoButton}
+            >
+              <Text style={styles.photoButtonText}>＋ Add a photo</Text>
+            </Pressable>
+          )}
+        </View>
+
         {error && <ErrorText>{error}</ErrorText>}
         <PrimaryButton title="Save entry" onPress={handleAdd} />
       </Card>
@@ -178,6 +215,7 @@ export default function JournalScreen() {
                 title={entry.title}
                 subtitle={entry.conditions}
                 meta={metaParts.join('  ·  ')}
+                thumbnailUri={entry.photoUri}
                 onRemove={() => remove(entry.id)}
               />
             )
@@ -206,4 +244,24 @@ const styles = StyleSheet.create({
   },
   chipText: { color: colors.muted, fontWeight: '600', fontSize: 13 },
   chipTextActive: { color: colors.accentStrong },
+  photoButton: {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    backgroundColor: '#fdfcf9',
+  },
+  photoButtonText: { color: colors.accentStrong, fontWeight: '600', fontSize: 14 },
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  photoPreview: { width: 88, height: 88, borderRadius: 10 },
+  photoRemove: {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  photoRemoveText: { color: colors.danger, fontWeight: '600', fontSize: 13 },
 })

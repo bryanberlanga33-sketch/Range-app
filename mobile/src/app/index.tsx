@@ -1,6 +1,7 @@
 import { Link } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { PastureLive } from '@/components/PastureLive'
 import { colors, spacing } from '@/theme'
 
 interface NavItem {
@@ -66,6 +67,8 @@ export default function Landing() {
             </Link>
           ))}
         </View>
+
+        <PastureLive />
       </ScrollView>
     </SafeAreaView>
   )

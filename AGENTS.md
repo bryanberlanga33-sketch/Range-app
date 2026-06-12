@@ -32,6 +32,12 @@ are persisted on-device via AsyncStorage (uses `localStorage` when run on web).
   toggle, and whole-herd pasture moves) and `WildlifeSection` (sightings with a
   where/when point placed inside a selected polygon). Herd edits use the `update()`
   helper on `useCollection`.
+- The landing page (`src/app/index.tsx`) renders `PastureLive` — a per-polygon "My
+  Pasture Live" data sheet that aggregates herds, plants, journal entries (incl. photos
+  + mapped data points), and wildlife sightings by pasture, plus an "Unassigned" bucket.
+  Records link to a polygon via `pastureId`/`locationId`. Journal entries can attach an
+  optional photo (`expo-image-picker`, stored as a base64 data URL so it persists);
+  plants can be tagged with a `pastureId`.
 - Maps use Leaflet via a shared, platform-split `MapCanvas` (`src/components/map/
   MapCanvas.web.tsx` uses an `<iframe>`, `MapCanvas.tsx` uses `react-native-webview`;
   both render the Leaflet document in `src/components/map/mapHtml.ts`). Leaflet and the

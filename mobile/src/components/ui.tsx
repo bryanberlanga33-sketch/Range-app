@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -140,17 +141,23 @@ export function RecordItem({
   title,
   subtitle,
   meta,
+  thumbnailUri,
   onRemove,
 }: {
   emoji: string
   title: string
   subtitle?: string
   meta?: string
+  thumbnailUri?: string
   onRemove: () => void
 }) {
   return (
     <View style={styles.record}>
-      <Text style={styles.recordEmoji}>{emoji}</Text>
+      {thumbnailUri ? (
+        <Image source={{ uri: thumbnailUri }} style={styles.recordThumb} />
+      ) : (
+        <Text style={styles.recordEmoji}>{emoji}</Text>
+      )}
       <View style={styles.flex}>
         <Text style={styles.recordTitle}>{title}</Text>
         {!!subtitle && <Text style={styles.recordSubtitle}>{subtitle}</Text>}
@@ -253,6 +260,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   recordEmoji: { fontSize: 26 },
+  recordThumb: { width: 44, height: 44, borderRadius: 8 },
   recordTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   recordSubtitle: { fontSize: 14, color: colors.text, marginTop: 2 },
   recordMeta: { fontSize: 13, color: colors.muted, marginTop: 2 },

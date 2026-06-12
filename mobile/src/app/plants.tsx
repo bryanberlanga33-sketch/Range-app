@@ -1,24 +1,35 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Badge, Card, EmptyState, Screen, SectionTitle } from '@/components/ui'
 import { PlantIdentifier } from '@/components/PlantIdentifier'
 import { PlantImage } from '@/components/PlantImage'
+import { PolygonSelector } from '@/components/PolygonSelector'
 import { categoryBadge, forageBadge } from '@/components/plantBadges'
 import { useCollection } from '@/store/useCollection'
-import type { PlantRecord } from '@/models'
+import type { LocationRecord, PlantRecord } from '@/models'
 import type { PlantSpecies } from '@/data/plantCatalog'
 import { colors, spacing } from '@/theme'
 
 export default function PlantsScreen() {
   const { items, add, remove } = useCollection<PlantRecord>('plant-species')
+  const { items: locations } = useCollection<LocationRecord>('locations')
 
+  const [pastureId, setPastureId] = useState<string | null>(null)
+
+  // "Added" state is per pasture context, so a species can be recorded in more
+  // than one pasture.
   const addedIds = useMemo(
-    () => items.map((p) => p.speciesId).filter((id): id is string => !!id),
-    [items],
+    () =>
+      items
+        .filter((p) => (p.pastureId ?? null) === pastureId)
+        .map((p) => p.speciesId)
+        .filter((id): id is string => !!id),
+    [items, pastureId],
   )
 
   function addSpecies(species: PlantSpecies) {
     if (species.id && addedIds.includes(species.id)) return
+    const pasture = locations.find((l) => l.id === pastureId)
     add({
       speciesId: species.id,
       commonName: species.commonName,
@@ -27,6 +38,8 @@ export default function PlantsScreen() {
       forageValue: species.forageValue,
       description: species.description,
       imageUrl: species.imageUrl,
+      pastureId: pasture?.id,
+      pastureName: pasture?.name,
     })
   }
 
@@ -38,6 +51,15 @@ export default function PlantsScreen() {
           Search the rangeland species catalog, then add a match. Each plant is
           categorized as a grass, forb, or brush species and rated for forage value.
         </Text>
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>Found in pasture (optional)</Text>
+          <PolygonSelector
+            polygons={locations}
+            selectedId={pastureId}
+            onSelect={setPastureId}
+            emptyHint="No polygons yet — create a pasture under Locations to tag plants by pasture."
+          />
+        </View>
         <PlantIdentifier addedIds={addedIds} onAdd={addSpecies} />
       </Card>
 
@@ -78,6 +100,9 @@ export default function PlantsScreen() {
                   {!!plant.description && (
                     <Text style={styles.desc}>{plant.description}</Text>
                   )}
+                  {!!plant.pastureName && (
+                    <Text style={styles.pasture}>📍 {plant.pastureName}</Text>
+                  )}
                 </View>
                 <Pressable
                   accessibilityRole="button"
@@ -98,6 +123,8 @@ export default function PlantsScreen() {
 
 const styles = StyleSheet.create({
   intro: { fontSize: 13, color: colors.muted, lineHeight: 18 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  pasture: { fontSize: 12, color: colors.accentStrong, fontWeight: '600', marginTop: 2 },
   card: {
     flexDirection: 'row',
     gap: spacing.md,
