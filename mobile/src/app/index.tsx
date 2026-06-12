@@ -1,5 +1,14 @@
+import { useEffect } from 'react'
 import { useRouter } from 'expo-router'
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PastureLive } from '@/components/PastureLive'
 import { colors, spacing } from '@/theme'
@@ -78,6 +87,12 @@ function NavCard({ item }: { item: NavItem }) {
 }
 
 export default function Landing() {
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.title = 'CLY'
+    }
+  }, [])
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
