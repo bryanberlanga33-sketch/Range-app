@@ -1,4 +1,4 @@
-import { Link } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PastureLive } from '@/components/PastureLive'
@@ -54,24 +54,24 @@ const COLUMNS: NavItem[][] = [
 ]
 
 function NavCard({ item }: { item: NavItem }) {
+  const router = useRouter()
   return (
-    <Link href={item.href} asChild>
-      <Pressable
-        accessibilityRole="link"
-        style={({ pressed }) => [
-          styles.card,
-          { backgroundColor: item.tone, height: item.height },
-          pressed && styles.cardPressed,
-        ]}
-      >
-        <Text style={styles.cardEmoji}>{item.emoji}</Text>
-        <View style={styles.flex} />
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-      </Pressable>
-    </Link>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(item.href)}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: item.tone, height: item.height },
+        pressed && styles.cardPressed,
+      ]}
+    >
+      <Text style={styles.cardEmoji}>{item.emoji}</Text>
+      <View style={styles.flex} />
+      <Text style={styles.cardTitle}>{item.title}</Text>
+      <Text style={styles.cardDescription} numberOfLines={2}>
+        {item.description}
+      </Text>
+    </Pressable>
   )
 }
 
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', gap: spacing.md },
   column: { flex: 1, gap: spacing.md },
   card: {
+    width: '100%',
     borderRadius: 20,
     padding: spacing.lg,
     justifyContent: 'flex-end',
