@@ -138,9 +138,10 @@ const styles = StyleSheet.create({
   },
   header: { gap: spacing.xs },
   logo: {
-    width: 210,
-    height: 104,
-    marginLeft: -8,
+    width: '74%',
+    maxWidth: 320,
+    aspectRatio: 1481 / 581,
+    marginLeft: -4,
   },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
   grid: { flexDirection: 'row', gap: spacing.md },
