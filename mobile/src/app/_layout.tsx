@@ -16,7 +16,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.bg },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false, title: 'CLY' }} />
         <Stack.Screen name="journal" options={{ title: 'Journal Entries' }} />
         <Stack.Screen name="location" options={{ title: 'Locations' }} />
         <Stack.Screen name="plants" options={{ title: 'Plant Species' }} />
