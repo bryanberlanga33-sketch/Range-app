@@ -9,62 +9,91 @@ interface NavItem {
   emoji: string
   title: string
   description: string
+  tone: string
+  height: number
 }
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    href: '/journal',
-    emoji: '📓',
-    title: 'Journal Entries',
-    description: 'Log daily rangeland conditions, weather, and observations.',
-  },
-  {
-    href: '/location',
-    emoji: '📍',
-    title: 'Locations',
-    description: 'Record pastures, paddocks, and points of interest.',
-  },
-  {
-    href: '/plants',
-    emoji: '🌿',
-    title: 'Plant Species',
-    description: 'Track grasses, forbs, and shrubs found across the range.',
-  },
-  {
-    href: '/wildlife',
-    emoji: '🐄',
-    title: 'Livestock & Wildlife',
-    description: 'Note herds, counts, and wildlife sightings.',
-  },
+// Staggered two-column layout (column-major) for a masonry feel.
+const COLUMNS: NavItem[][] = [
+  [
+    {
+      href: '/journal',
+      emoji: '📓',
+      title: 'Journal Entries',
+      description: 'Log daily conditions & observations',
+      tone: '#2f4a37',
+      height: 176,
+    },
+    {
+      href: '/plants',
+      emoji: '🌿',
+      title: 'Plant Species',
+      description: 'Identify grasses, forbs & brush',
+      tone: '#6c7a55',
+      height: 212,
+    },
+  ],
+  [
+    {
+      href: '/location',
+      emoji: '📍',
+      title: 'Locations',
+      description: 'Map pastures & property fences',
+      tone: '#54664c',
+      height: 212,
+    },
+    {
+      href: '/wildlife',
+      emoji: '🐄',
+      title: 'Livestock & Wildlife',
+      description: 'Herds, rotations & sightings',
+      tone: '#3a4f3e',
+      height: 176,
+    },
+  ],
 ]
+
+function NavCard({ item }: { item: NavItem }) {
+  return (
+    <Link href={item.href} asChild>
+      <Pressable
+        accessibilityRole="link"
+        style={({ pressed }) => [
+          styles.card,
+          { backgroundColor: item.tone, height: item.height },
+          pressed && styles.cardPressed,
+        ]}
+      >
+        <Text style={styles.cardEmoji}>{item.emoji}</Text>
+        <View style={styles.flex} />
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.cardDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
+      </Pressable>
+    </Link>
+  )
+}
 
 export default function Landing() {
   return (
-    <SafeAreaView style={styles.screen} edges={['bottom']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
-          <Text style={styles.heroEmoji}>🌾</Text>
-          <Text style={styles.title}>Rangeland Journal</Text>
+        <View style={styles.header}>
+          <Text style={styles.kicker}>RANGELAND JOURNAL</Text>
+          <Text style={styles.title}>Find your{'\n'}path</Text>
           <Text style={styles.subtitle}>
-            Keep a field record of conditions across your property.
+            Track conditions across your property.
           </Text>
         </View>
 
         <View style={styles.grid}>
-          {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href} asChild>
-              <Pressable
-                accessibilityRole="link"
-                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              >
-                <Text style={styles.cardEmoji}>{item.emoji}</Text>
-                <View style={styles.cardText}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardDescription}>{item.description}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            </Link>
+          {COLUMNS.map((column, i) => (
+            <View key={i} style={styles.column}>
+              {column.map((item) => (
+                <NavCard key={item.href} item={item} />
+              ))}
+            </View>
           ))}
         </View>
 
@@ -75,38 +104,46 @@ export default function Landing() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.bg },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
     gap: spacing.xl,
-    maxWidth: 720,
+    maxWidth: 760,
     width: '100%',
     alignSelf: 'center',
   },
-  hero: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
-  heroEmoji: { fontSize: 48 },
-  title: { fontSize: 28, fontWeight: '800', color: colors.text },
-  subtitle: {
-    fontSize: 15,
+  header: { gap: spacing.xs },
+  kicker: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.5,
     color: colors.muted,
-    textAlign: 'center',
-    maxWidth: 360,
   },
-  grid: { gap: spacing.md },
+  title: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: colors.text,
+    lineHeight: 38,
+  },
+  subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
+  grid: { flexDirection: 'row', gap: spacing.md },
+  column: { flex: 1, gap: spacing.md },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: spacing.lg,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  cardPressed: { backgroundColor: colors.accentSoft },
-  cardEmoji: { fontSize: 30 },
-  cardText: { flex: 1 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
-  cardDescription: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  chevron: { fontSize: 28, color: colors.muted, fontWeight: '300' },
+  cardPressed: { opacity: 0.9 },
+  cardEmoji: { fontSize: 34, position: 'absolute', top: spacing.lg, left: spacing.lg },
+  cardTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  cardDescription: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+    lineHeight: 16,
+  },
 })

@@ -1,14 +1,14 @@
 export const colors = {
-  bg: '#f4f1ea',
+  bg: '#ecebe6',
   surface: '#ffffff',
-  border: '#e2dcce',
-  text: '#2c2a26',
-  muted: '#6f6a60',
-  accent: '#5b7a3a',
-  accentStrong: '#3f5a26',
-  accentSoft: '#e7eedb',
+  border: '#e2e3dd',
+  text: '#222d27',
+  muted: '#7c847d',
+  accent: '#2f4a37',
+  accentStrong: '#1f3327',
+  accentSoft: '#e3eade',
   danger: '#9b3b28',
-  sky: '#7a5c2e',
+  sky: '#3f5340',
 }
 
 export const spacing = {

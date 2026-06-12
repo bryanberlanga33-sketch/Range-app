@@ -5,16 +5,17 @@ import { colors } from '@/theme'
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.accentStrong },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: '700' },
+          headerStyle: { backgroundColor: colors.bg },
+          headerTintColor: colors.text,
+          headerTitleStyle: { fontWeight: '700', color: colors.text },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.bg },
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'Rangeland Journal' }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="journal" options={{ title: 'Journal Entries' }} />
         <Stack.Screen name="location" options={{ title: 'Locations' }} />
         <Stack.Screen name="plants" options={{ title: 'Plant Species' }} />
