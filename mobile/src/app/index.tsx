@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { PastureLive } from '@/components/PastureLive'
 import { colors, spacing } from '@/theme'
 
-const CLY_LOGO = require('../../assets/images/cly-logo.png')
+const CLY_LOGO = require('../../assets/images/cly-logo-clay.png')
 
 interface NavItem {
   href: '/journal' | '/location' | '/plants' | '/wildlife'
@@ -138,9 +138,8 @@ const styles = StyleSheet.create({
   },
   header: { gap: spacing.xs },
   logo: {
-    width: 300,
-    height: 139,
-    marginLeft: -4,
+    width: 248,
+    height: 115,
   },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
   grid: { flexDirection: 'row', gap: spacing.md },
