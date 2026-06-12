@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   header: { gap: spacing.xs },
   logo: {
     width: 300,
-    height: 118,
+    height: 122,
     marginLeft: -4,
   },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
