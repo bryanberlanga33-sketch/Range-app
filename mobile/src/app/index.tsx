@@ -122,7 +122,7 @@ export default function Landing() {
           accessibilityRole="button"
           accessibilityLabel="Open My Pasture Live"
           onPress={() => router.push('/pasture-live')}
-          style={({ pressed }) => [styles.liveCard, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.liveCard, pressed && styles.liveCardPressed]}
         >
           <Text style={styles.liveEmoji}>📊</Text>
           <View style={styles.flex}>
@@ -170,16 +170,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+    backgroundColor: colors.burntOrange,
+    borderColor: colors.burntOrangeDark,
     borderWidth: 1,
     borderRadius: 20,
     padding: spacing.lg,
   },
+  liveCardPressed: { backgroundColor: colors.burntOrangeDark },
   liveEmoji: { fontSize: 30 },
-  liveTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
-  liveDescription: { fontSize: 12, color: colors.muted, marginTop: 2, lineHeight: 16 },
-  liveArrow: { fontSize: 28, color: colors.muted, fontWeight: '300' },
+  liveTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  liveDescription: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  liveArrow: { fontSize: 28, color: 'rgba(255,255,255,0.9)', fontWeight: '300' },
   cardEmoji: { fontSize: 34, position: 'absolute', top: spacing.lg, left: spacing.lg },
   cardTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   cardDescription: {
