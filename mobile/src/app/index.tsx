@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { MenuButton } from '@/components/SideMenu'
 import { colors, spacing } from '@/theme'
 
 const CLY_LOGO = require('../../assets/images/cly-logo-clay.png')
@@ -96,6 +97,9 @@ export default function Landing() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.topBar}>
+          <MenuButton />
+        </View>
         <View style={styles.header}>
           <Image
             source={CLY_LOGO}
@@ -150,6 +154,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  topBar: { alignItems: 'flex-end', marginBottom: -spacing.sm },
   header: { gap: spacing.xs },
   logo: {
     width: 248,
