@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { Badge } from './ui'
 import { categoryBadge, forageBadge } from './plantBadges'
+import { PastureTrends } from './PastureTrends'
 import { polygonAreaAcres } from './map/geo'
 import { useCollection } from '@/store/useCollection'
 import {
@@ -375,6 +376,8 @@ function PastureSheet({
                   ))}
                 </View>
               )}
+
+              {s.journals.length > 0 && <PastureTrends journals={s.journals} />}
             </>
           )}
         </View>
