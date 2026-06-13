@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Badge } from './ui'
 import { categoryBadge, forageBadge } from './plantBadges'
 import { useCollection } from '@/store/useCollection'
@@ -59,6 +59,7 @@ function formatDate(ts: number) {
 }
 
 export function PastureLive() {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const { items: locations } = useCollection<LocationRecord>('locations')
   const { items: journals } = useCollection<JournalEntry>('journal-entries')
   const { items: plants } = useCollection<PlantRecord>('plant-species')
@@ -119,36 +120,77 @@ export function PastureLive() {
           </Text>
         </View>
       ) : (
-        summaries.map((s) => <PastureSheet key={s.id ?? 'unassigned'} summary={s} />)
+        <View style={styles.list}>
+          {summaries.map((s) => {
+            const key = s.id ?? 'unassigned'
+            return (
+              <PastureSheet
+                key={key}
+                summary={s}
+                expanded={selectedKey === key}
+                onToggle={() =>
+                  setSelectedKey((prev) => (prev === key ? null : key))
+                }
+              />
+            )
+          })}
+        </View>
       )}
     </View>
   )
 }
 
-function PastureSheet({ summary: s }: { summary: PastureSummary }) {
+function recordCount(s: PastureSummary) {
+  return s.herds.length + s.plants.length + s.journals.length + s.sightings.length
+}
+
+function PastureSheet({
+  summary: s,
+  expanded,
+  onToggle,
+}: {
+  summary: PastureSummary
+  expanded: boolean
+  onToggle: () => void
+}) {
   const isEmpty =
     s.herds.length === 0 &&
     s.plants.length === 0 &&
     s.journals.length === 0 &&
     s.sightings.length === 0
   const latestJournal = s.journals[0]
+  const count = recordCount(s)
 
   return (
-    <View style={styles.sheet}>
-      <View style={styles.sheetHeader}>
-        <Text style={styles.sheetName}>🌿 {s.name}</Text>
-        {s.id && (
-          <Text style={styles.sheetFence}>
-            {s.vertices >= 3 ? `${s.vertices}-point fence` : 'no fence drawn'}
-          </Text>
-        )}
-      </View>
+    <View style={[styles.sheet, expanded && styles.sheetExpanded]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={`${s.name}, ${count} record${count === 1 ? '' : 's'}`}
+        onPress={onToggle}
+        style={({ pressed }) => [styles.sheetHeader, pressed && styles.sheetHeaderPressed]}
+      >
+        <Text style={styles.sheetName} numberOfLines={1}>
+          🌿 {s.name}
+        </Text>
+        <View style={styles.headerMeta}>
+          <Text style={styles.countPill}>{count}</Text>
+          <Text style={styles.chevron}>{expanded ? '▾' : '▸'}</Text>
+        </View>
+      </Pressable>
 
-      {isEmpty ? (
-        <Text style={styles.muted}>No records yet for this pasture.</Text>
-      ) : (
-        <>
-          {/* Livestock */}
+      {!expanded ? null : (
+        <View style={styles.sheetBody}>
+          {s.id && (
+            <Text style={styles.sheetFence}>
+              {s.vertices >= 3 ? `${s.vertices}-point fence` : 'no fence drawn'}
+            </Text>
+          )}
+          {isEmpty ? (
+            <Text style={styles.muted}>No records yet for this pasture.</Text>
+          ) : (
+            <>
+              {/* Livestock */}
           {s.herds.length > 0 && (
             <View style={styles.block}>
               <Text style={styles.blockHead}>
@@ -234,7 +276,9 @@ function PastureSheet({ summary: s }: { summary: PastureSummary }) {
               ))}
             </View>
           )}
-        </>
+            </>
+          )}
+        </View>
       )}
     </View>
   )
@@ -250,22 +294,43 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   emptyText: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  list: { gap: spacing.sm },
   sheet: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 16,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     gap: spacing.sm,
+  },
+  sheetExpanded: {
+    borderColor: colors.accent,
+    paddingBottom: spacing.lg,
   },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  sheetName: { fontSize: 17, fontWeight: '700', color: colors.text },
+  sheetHeaderPressed: { opacity: 0.6 },
+  headerMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  countPill: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accentStrong,
+    backgroundColor: colors.accentSoft,
+    minWidth: 22,
+    textAlign: 'center',
+    borderRadius: 11,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  chevron: { fontSize: 14, color: colors.muted, fontWeight: '700' },
+  sheetBody: { gap: spacing.sm },
+  sheetName: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   sheetFence: { fontSize: 12, color: colors.muted, fontWeight: '600' },
   muted: { fontSize: 13, color: colors.muted },
   block: {
