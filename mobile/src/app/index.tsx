@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { PastureLive } from '@/components/PastureLive'
 import { colors, spacing } from '@/theme'
 
 const CLY_LOGO = require('../../assets/images/cly-logo-clay.png')
@@ -87,6 +86,7 @@ function NavCard({ item }: { item: NavItem }) {
 }
 
 export default function Landing() {
+  const router = useRouter()
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.title = 'CLY'
@@ -118,7 +118,21 @@ export default function Landing() {
           ))}
         </View>
 
-        <PastureLive />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open My Pasture Live"
+          onPress={() => router.push('/pasture-live')}
+          style={({ pressed }) => [styles.liveCard, pressed && styles.cardPressed]}
+        >
+          <Text style={styles.liveEmoji}>📊</Text>
+          <View style={styles.flex}>
+            <Text style={styles.liveTitle}>My Pasture Live</Text>
+            <Text style={styles.liveDescription} numberOfLines={2}>
+              Search & browse every pasture’s journals, plants, livestock & wildlife
+            </Text>
+          </View>
+          <Text style={styles.liveArrow}>›</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   )
@@ -152,6 +166,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardPressed: { opacity: 0.9 },
+  liveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: spacing.lg,
+  },
+  liveEmoji: { fontSize: 30 },
+  liveTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
+  liveDescription: { fontSize: 12, color: colors.muted, marginTop: 2, lineHeight: 16 },
+  liveArrow: { fontSize: 28, color: colors.muted, fontWeight: '300' },
   cardEmoji: { fontSize: 34, position: 'absolute', top: spacing.lg, left: spacing.lg },
   cardTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   cardDescription: {

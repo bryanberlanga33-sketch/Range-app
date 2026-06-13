@@ -17,6 +17,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false, title: 'CLY' }} />
+        <Stack.Screen name="pasture-live" options={{ title: 'My Pasture Live' }} />
         <Stack.Screen name="journal" options={{ title: 'Journal Entries' }} />
         <Stack.Screen name="location" options={{ title: 'Locations' }} />
         <Stack.Screen name="plants" options={{ title: 'Plant Species' }} />
