@@ -185,6 +185,14 @@ const styles = StyleSheet.create({
   linkPressed: { backgroundColor: 'rgba(255,255,255,0.10)' },
   linkEmoji: { fontSize: 18 },
   linkText: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  menuButton: { paddingHorizontal: spacing.sm, paddingVertical: 4 },
-  menuIcon: { fontSize: 22, fontWeight: '700' },
+  menuButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: spacing.sm,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  menuIcon: { fontSize: 22, fontWeight: '700', lineHeight: 24 },
 })
