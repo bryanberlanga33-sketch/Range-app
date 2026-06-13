@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { colors, spacing } from '@/theme'
 import { MapCanvas } from './map/MapCanvas'
 import { makeId, pointInPolygon } from './map/geo'
-import type { DataPoint, LatLng } from './map/types'
+import type { DataPoint, FrameSample, LatLng } from './map/types'
+import { daubenmireClass } from '@/lib/carryingCapacity'
 
 interface DataPointMapperProps {
   boundary: LatLng[]
@@ -15,12 +16,24 @@ function fmt(n: number): string {
   return n.toFixed(5)
 }
 
+function sampleFilled(s?: FrameSample): boolean {
+  if (!s) return false
+  return (
+    !!s.forageType ||
+    typeof s.foragePct === 'number' ||
+    typeof s.litterPct === 'number' ||
+    typeof s.bareGroundPct === 'number' ||
+    typeof s.dryMatterLbsAcre === 'number'
+  )
+}
+
 export function DataPointMapper({
   boundary,
   dataPoints,
   onChange,
 }: DataPointMapperProps) {
   const [warning, setWarning] = useState<string | null>(null)
+  const [openSampleId, setOpenSampleId] = useState<string | null>(null)
 
   function addPoint(lat: number, lng: number) {
     if (boundary.length >= 3 && !pointInPolygon(lat, lng, boundary)) {
@@ -39,6 +52,13 @@ export function DataPointMapper({
   function removePoint(id: string) {
     onChange(dataPoints.filter((p) => p.id !== id))
   }
+  function updateSample(id: string, patch: Partial<FrameSample>) {
+    onChange(
+      dataPoints.map((p) =>
+        p.id === id ? { ...p, sample: { ...p.sample, ...patch } } : p,
+      ),
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -54,40 +74,166 @@ export function DataPointMapper({
       <Text style={styles.heading}>Data points ({dataPoints.length})</Text>
       {dataPoints.length === 0 ? (
         <Text style={styles.hint}>
-          Tap inside the polygon to add a data point (e.g. water trough, bare
-          ground, weed cluster). You can label each one below.
+          Tap inside the polygon to add a data point (e.g. a Daubenmire frame
+          location). Label each one and add a frame sample below.
         </Text>
       ) : (
         <View style={styles.list}>
-          {dataPoints.map((point, index) => (
-            <View key={point.id} style={styles.row}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{index + 1}</Text>
+          {dataPoints.map((point, index) => {
+            const open = openSampleId === point.id
+            const filled = sampleFilled(point.sample)
+            return (
+              <View key={point.id} style={styles.pointCard}>
+                <View style={styles.row}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.body}>
+                    <TextInput
+                      style={styles.labelInput}
+                      value={point.label}
+                      onChangeText={(text) => renamePoint(point.id, text)}
+                      placeholder={`Data point ${index + 1}`}
+                      placeholderTextColor={colors.muted}
+                    />
+                    <Text style={styles.coords}>
+                      {fmt(point.lat)}, {fmt(point.lng)}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${point.label}`}
+                    onPress={() => removePoint(point.id)}
+                    style={styles.removeButton}
+                  >
+                    <Text style={styles.removeText}>✕</Text>
+                  </Pressable>
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: open }}
+                  onPress={() => setOpenSampleId(open ? null : point.id)}
+                  style={styles.sampleToggle}
+                >
+                  <Text style={styles.sampleToggleText}>
+                    {open ? '▾' : '▸'} Frame sample (Daubenmire)
+                    {filled ? '  ·  ✓ recorded' : ''}
+                  </Text>
+                </Pressable>
+
+                {open && (
+                  <FrameSampleEditor
+                    sample={point.sample}
+                    onChange={(patch) => updateSample(point.id, patch)}
+                  />
+                )}
               </View>
-              <View style={styles.body}>
-                <TextInput
-                  style={styles.labelInput}
-                  value={point.label}
-                  onChangeText={(text) => renamePoint(point.id, text)}
-                  placeholder={`Data point ${index + 1}`}
-                  placeholderTextColor={colors.muted}
-                />
-                <Text style={styles.coords}>
-                  {fmt(point.lat)}, {fmt(point.lng)}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${point.label}`}
-                onPress={() => removePoint(point.id)}
-                style={styles.removeButton}
-              >
-                <Text style={styles.removeText}>✕</Text>
-              </Pressable>
-            </View>
-          ))}
+            )
+          })}
         </View>
       )}
+    </View>
+  )
+}
+
+function PercentField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value?: number
+  onChange: (v: number | undefined) => void
+}) {
+  const showClass = typeof value === 'number' && !Number.isNaN(value)
+  const cls = showClass ? daubenmireClass(value as number) : null
+  return (
+    <View style={styles.percentField}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.percentRow}>
+        <TextInput
+          style={styles.numInput}
+          value={value === undefined ? '' : String(value)}
+          onChangeText={(t) => {
+            const n = parseFloat(t)
+            onChange(t.trim() === '' || Number.isNaN(n) ? undefined : n)
+          }}
+          keyboardType="numeric"
+          placeholder="0–100"
+          placeholderTextColor={colors.muted}
+        />
+        <Text style={styles.percentSign}>%</Text>
+        {cls && <Text style={styles.classTag}>class {cls.cls}</Text>}
+      </View>
+    </View>
+  )
+}
+
+function FrameSampleEditor({
+  sample,
+  onChange,
+}: {
+  sample?: FrameSample
+  onChange: (patch: Partial<FrameSample>) => void
+}) {
+  return (
+    <View style={styles.sampleBox}>
+      <View style={styles.field}>
+        <Text style={styles.fieldLabel}>Forage type</Text>
+        <TextInput
+          style={styles.textInput}
+          value={sample?.forageType ?? ''}
+          onChangeText={(t) => onChange({ forageType: t })}
+          placeholder="e.g. Big bluestem, mixed warm-season"
+          placeholderTextColor={colors.muted}
+        />
+      </View>
+
+      <View style={styles.fieldGrid}>
+        <PercentField
+          label="Forage cover"
+          value={sample?.foragePct}
+          onChange={(v) => onChange({ foragePct: v })}
+        />
+        <PercentField
+          label="Litter"
+          value={sample?.litterPct}
+          onChange={(v) => onChange({ litterPct: v })}
+        />
+        <PercentField
+          label="Bare ground"
+          value={sample?.bareGroundPct}
+          onChange={(v) => onChange({ bareGroundPct: v })}
+        />
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.fieldLabel}>Total dry matter (lbs/acre)</Text>
+        <TextInput
+          style={styles.textInput}
+          value={
+            sample?.dryMatterLbsAcre === undefined
+              ? ''
+              : String(sample.dryMatterLbsAcre)
+          }
+          onChangeText={(t) => {
+            const n = parseFloat(t)
+            onChange({
+              dryMatterLbsAcre:
+                t.trim() === '' || Number.isNaN(n) ? undefined : n,
+            })
+          }}
+          keyboardType="numeric"
+          placeholder="Clipped & oven-dry biomass, lbs/acre"
+          placeholderTextColor={colors.muted}
+        />
+      </View>
+
+      <Text style={styles.sampleHint}>
+        Ocular canopy-cover estimate inside the frame (Daubenmire classes:
+        1 = 0–5%, 2 = 5–25%, 3 = 25–50%, 4 = 50–75%, 5 = 75–95%, 6 = 95–100%).
+      </Text>
     </View>
   )
 }
@@ -98,15 +244,18 @@ const styles = StyleSheet.create({
   heading: { fontSize: 14, fontWeight: '700', color: colors.text },
   hint: { color: colors.muted, fontSize: 13, lineHeight: 18 },
   list: { gap: spacing.sm },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  pointCard: {
     backgroundColor: '#fdfcf9',
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 10,
     padding: spacing.sm,
+    gap: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   badge: {
     width: 26,
@@ -135,4 +284,40 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   removeText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  sampleToggle: {
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    paddingTop: spacing.sm,
+  },
+  sampleToggleText: { fontSize: 13, fontWeight: '700', color: colors.accentStrong },
+  sampleBox: { gap: spacing.sm },
+  field: { gap: 4 },
+  percentField: { gap: 4, minWidth: 92 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  fieldGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  textInput: {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.surface,
+  },
+  percentRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  numInput: {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    width: 64,
+  },
+  percentSign: { fontSize: 13, color: colors.muted },
+  classTag: { fontSize: 11, color: colors.accentStrong, fontWeight: '700' },
+  sampleHint: { fontSize: 11, color: colors.muted, lineHeight: 15 },
 })
