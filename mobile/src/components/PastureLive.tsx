@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { Badge } from './ui'
 import { categoryBadge, forageBadge } from './plantBadges'
+import { polygonAreaAcres } from './map/geo'
 import { useCollection } from '@/store/useCollection'
 import {
   locationVertices,
@@ -21,11 +22,12 @@ import {
 } from '@/models'
 import { colors, spacing } from '@/theme'
 
-interface PastureSummary {
+export interface PastureSummary {
   id: string | null
   name: string
   notes: string
   vertices: number
+  areaAcres: number
   herds: Herd[]
   totalHead: number
   rotationHerds: number
@@ -41,6 +43,7 @@ function summarize(
   name: string,
   notes: string,
   vertices: number,
+  areaAcres: number,
   herds: Herd[],
   plants: PlantRecord[],
   journals: JournalEntry[],
@@ -51,6 +54,7 @@ function summarize(
     name,
     notes,
     vertices,
+    areaAcres,
     herds,
     totalHead: herds.reduce((sum, h) => sum + (h.headCount || 0), 0),
     rotationHerds: herds.filter((h) => h.onRotation).length,
@@ -107,6 +111,7 @@ export function usePastureSummaries(): PastureSummary[] {
         loc.name,
         loc.notes ?? '',
         locationVertices(loc).length,
+        polygonAreaAcres(locationVertices(loc)),
         herds.filter((h) => h.pastureId === loc.id),
         plants.filter((p) => p.pastureId === loc.id),
         journals.filter((j) => j.locationId === loc.id),
@@ -129,6 +134,7 @@ export function usePastureSummaries(): PastureSummary[] {
           null,
           'Unassigned (no pasture)',
           '',
+          0,
           0,
           orphanHerds,
           orphanPlants,

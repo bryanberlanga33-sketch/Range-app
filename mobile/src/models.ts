@@ -72,6 +72,19 @@ export interface WildlifeSighting extends BaseRecord {
   notes?: string
 }
 
+/**
+ * A named grouping of pasture polygons. Used to plan a rotational grazing
+ * sequence (`kind: 'rotation'`, where `pastureIds` order is the rotation order)
+ * or simply to group the pastures that make up one property (`kind: 'property'`).
+ */
+export interface PastureGroup extends BaseRecord {
+  name: string
+  kind: 'rotation' | 'property'
+  /** Member location (pasture) ids. For rotations, order = grazing sequence. */
+  pastureIds: string[]
+  note?: string
+}
+
 /** Resolves a location's polygon vertices, tolerating legacy `points` data. */
 export function locationVertices(loc: LocationRecord): LatLng[] {
   if (loc.vertices && loc.vertices.length > 0) {
