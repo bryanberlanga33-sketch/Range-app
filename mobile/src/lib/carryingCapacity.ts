@@ -40,13 +40,25 @@ export const DAYS_PER_MONTH = 30.4
 /** Dry matter (lbs) one animal unit consumes in a month (one AUM). */
 export const AUM_LBS = AU_INTAKE_LBS_PER_DAY * DAYS_PER_MONTH
 
+export const SQ_METERS_PER_ACRE = 4046.8564224
+export const GRAMS_PER_LB = 453.59237
+/** 1 g per 1 m² frame === this many lbs per acre. */
+export const G_PER_M2_TO_LB_PER_ACRE = SQ_METERS_PER_ACRE / GRAMS_PER_LB
+
 export interface SampleSummary {
+  /** Total frame samples recorded. */
   count: number
-  withDryMatter: number
+  /** Frames that have a clipped dry-matter weight. */
+  framesWithDm: number
+  /** Σ grams of dry matter clipped across all 1 m² frames. */
+  sumGrams?: number
+  /** Mean dry matter density (each frame is 1 m², so this is g/m²). */
+  meanGramsPerM2?: number
+  /** Mean density expressed as lbs/acre. */
+  meanDmLbsAcre?: number
   meanForagePct?: number
   meanLitterPct?: number
   meanBarePct?: number
-  meanDryMatter?: number
 }
 
 function mean(values: number[]): number | undefined {
@@ -63,14 +75,25 @@ export function summarizeSamples(dataPoints: DataPoint[]): SampleSummary {
   const samples = dataPoints
     .map((p) => p.sample)
     .filter((s): s is FrameSample => !!s)
-  const dm = samples.map((s) => s.dryMatterLbsAcre).filter(isNum)
+  const grams = samples.map((s) => s.dryMatterGrams).filter(isNum)
+  const sumGrams = grams.length
+    ? grams.reduce((a, b) => a + b, 0)
+    : undefined
+  const meanGramsPerM2 =
+    grams.length && sumGrams !== undefined ? sumGrams / grams.length : undefined
+  const meanDmLbsAcre =
+    meanGramsPerM2 !== undefined
+      ? meanGramsPerM2 * G_PER_M2_TO_LB_PER_ACRE
+      : undefined
   return {
     count: samples.length,
-    withDryMatter: dm.length,
+    framesWithDm: grams.length,
+    sumGrams,
+    meanGramsPerM2,
+    meanDmLbsAcre,
     meanForagePct: mean(samples.map((s) => s.foragePct).filter(isNum)),
     meanLitterPct: mean(samples.map((s) => s.litterPct).filter(isNum)),
     meanBarePct: mean(samples.map((s) => s.bareGroundPct).filter(isNum)),
-    meanDryMatter: mean(dm),
   }
 }
 
@@ -98,6 +121,12 @@ export interface CarryingCapacityResult {
   reason?: string
   areaAcres: number
   herdAU: number
+  sumGrams?: number
+  framesWithDm?: number
+  meanGramsPerM2?: number
+  dmLbsPerAcre?: number
+  /** Estimated total dry matter for the whole pasture (lbs). */
+  totalDmLbs?: number
   foragePctUsed?: number
   forageDmLbsAcre?: number
   totalForageLbs?: number
@@ -109,11 +138,12 @@ export interface CarryingCapacityResult {
 }
 
 /**
- * Estimates pasture carrying capacity from averaged Daubenmire frame samples.
+ * Estimates pasture dry matter and carrying capacity from 1 m² frame clips.
  *
- * Forage dry matter = mean total dry matter × forage canopy fraction. Allocable
- * forage applies the proper-use factor, and demand is one AU eating
- * ~26 lbs DM/day (one AUM ≈ 790 lbs).
+ * Frames are summed and averaged to a per-m² density, scaled by the polygon
+ * area to a whole-pasture dry matter, then narrowed to forage by the mean
+ * forage canopy fraction. Allocable forage applies the proper-use factor, and
+ * demand is one AU eating ~26 lbs DM/day (one AUM ≈ 790 lbs).
  */
 export function estimateCarryingCapacity(
   input: CarryingCapacityInput,
@@ -127,15 +157,18 @@ export function estimateCarryingCapacity(
       reason: 'Draw a polygon fence (3+ points) under Locations to set the pasture area.',
     }
   }
-  if (!isNum(summary.meanDryMatter) || summary.withDryMatter === 0) {
+  if (!isNum(summary.meanGramsPerM2) || summary.framesWithDm === 0) {
     return {
       ...base,
-      reason: 'Enter total dry matter (lbs/acre) on at least one frame sample.',
+      reason:
+        'Enter the dry matter clipped (grams) on at least one 1 m² frame sample.',
     }
   }
 
+  const dmLbsPerAcre = summary.meanGramsPerM2 * G_PER_M2_TO_LB_PER_ACRE
+  const totalDmLbs = dmLbsPerAcre * areaAcres
   const foragePct = isNum(summary.meanForagePct) ? summary.meanForagePct : 100
-  const forageDmLbsAcre = summary.meanDryMatter * (foragePct / 100)
+  const forageDmLbsAcre = dmLbsPerAcre * (foragePct / 100)
   const totalForageLbs = forageDmLbsAcre * areaAcres
   const allocableLbs = totalForageLbs * (useFactorPct / 100)
   const aums = allocableLbs / AUM_LBS
@@ -148,6 +181,11 @@ export function estimateCarryingCapacity(
     computable: true,
     areaAcres,
     herdAU,
+    sumGrams: summary.sumGrams,
+    framesWithDm: summary.framesWithDm,
+    meanGramsPerM2: summary.meanGramsPerM2,
+    dmLbsPerAcre,
+    totalDmLbs,
     foragePctUsed: foragePct,
     forageDmLbsAcre,
     totalForageLbs,

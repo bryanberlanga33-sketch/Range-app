@@ -78,29 +78,36 @@ export function CarryingCapacityCard({
         )}
       </View>
 
-      {summary.count > 0 && (
-        <View style={styles.coverRow}>
-          {summary.meanForagePct !== undefined && (
-            <Text style={styles.coverText}>
-              Forage {round(summary.meanForagePct)}%
-            </Text>
-          )}
-          {summary.meanLitterPct !== undefined && (
-            <Text style={styles.coverText}>
-              Litter {round(summary.meanLitterPct)}%
-            </Text>
-          )}
-          {summary.meanBarePct !== undefined && (
-            <Text style={styles.coverText}>
-              Bare {round(summary.meanBarePct)}%
-            </Text>
-          )}
-          {summary.meanDryMatter !== undefined && (
-            <Text style={styles.coverText}>
-              DM {round(summary.meanDryMatter)} lb/ac
-            </Text>
-          )}
-        </View>
+      {summary.count > 0 &&
+        (summary.meanForagePct !== undefined ||
+          summary.meanLitterPct !== undefined ||
+          summary.meanBarePct !== undefined) && (
+          <View style={styles.coverRow}>
+            {summary.meanForagePct !== undefined && (
+              <Text style={styles.coverText}>
+                Forage {round(summary.meanForagePct)}%
+              </Text>
+            )}
+            {summary.meanLitterPct !== undefined && (
+              <Text style={styles.coverText}>
+                Litter {round(summary.meanLitterPct)}%
+              </Text>
+            )}
+            {summary.meanBarePct !== undefined && (
+              <Text style={styles.coverText}>
+                Bare {round(summary.meanBarePct)}%
+              </Text>
+            )}
+          </View>
+        )}
+
+      {summary.framesWithDm > 0 && summary.meanGramsPerM2 !== undefined && (
+        <Text style={styles.frameLine}>
+          🌾 Σ {round(summary.sumGrams ?? 0)} g across {summary.framesWithDm} ×
+          1 m² frame{summary.framesWithDm === 1 ? '' : 's'} →{' '}
+          {round(summary.meanGramsPerM2, 1)} g/m² (≈{' '}
+          {round(summary.meanDmLbsAcre ?? 0)} lb/acre)
+        </Text>
       )}
 
       <View style={styles.inputsRow}>
@@ -138,6 +145,18 @@ export function CarryingCapacityCard({
         <Text style={styles.reason}>{result.reason}</Text>
       ) : (
         <>
+          <View style={styles.totalDm}>
+            <Text style={styles.totalDmValue}>
+              ≈ {round(result.totalDmLbs ?? 0)} lb
+              <Text style={styles.totalDmUnit}>
+                {'  '}({round((result.totalDmLbs ?? 0) / 2000, 1)} tons)
+              </Text>
+            </Text>
+            <Text style={styles.totalDmLabel}>
+              estimated total dry matter over {round(areaAcres, 1)} acres
+            </Text>
+          </View>
+
           <View style={styles.stats}>
             <Stat label="AUMs available" value={round(result.aums ?? 0, 1)} />
             <Stat
@@ -205,6 +224,19 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     overflow: 'hidden',
   },
+  frameLine: { fontSize: 12, color: colors.text, lineHeight: 17, fontWeight: '600' },
+  totalDm: {
+    backgroundColor: colors.surface,
+    borderColor: colors.accent,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+  },
+  totalDmValue: { fontSize: 20, fontWeight: '800', color: colors.accentStrong },
+  totalDmUnit: { fontSize: 13, fontWeight: '700', color: colors.muted },
+  totalDmLabel: { fontSize: 11, color: colors.muted, marginTop: 2 },
   inputsRow: { flexDirection: 'row', gap: spacing.md },
   inputField: { flex: 1, gap: 4 },
   inputLabel: { fontSize: 12, fontWeight: '600', color: colors.muted },

@@ -23,7 +23,7 @@ function sampleFilled(s?: FrameSample): boolean {
     typeof s.foragePct === 'number' ||
     typeof s.litterPct === 'number' ||
     typeof s.bareGroundPct === 'number' ||
-    typeof s.dryMatterLbsAcre === 'number'
+    typeof s.dryMatterGrams === 'number'
   )
 }
 
@@ -209,30 +209,33 @@ function FrameSampleEditor({
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Total dry matter (lbs/acre)</Text>
+        <Text style={styles.fieldLabel}>
+          Dry matter clipped in this 1 m × 1 m frame (grams)
+        </Text>
         <TextInput
           style={styles.textInput}
           value={
-            sample?.dryMatterLbsAcre === undefined
+            sample?.dryMatterGrams === undefined
               ? ''
-              : String(sample.dryMatterLbsAcre)
+              : String(sample.dryMatterGrams)
           }
           onChangeText={(t) => {
             const n = parseFloat(t)
             onChange({
-              dryMatterLbsAcre:
-                t.trim() === '' || Number.isNaN(n) ? undefined : n,
+              dryMatterGrams: t.trim() === '' || Number.isNaN(n) ? undefined : n,
             })
           }}
           keyboardType="numeric"
-          placeholder="Clipped & oven-dry biomass, lbs/acre"
+          placeholder="Oven-dry forage weight from this frame, grams"
           placeholderTextColor={colors.muted}
         />
       </View>
 
       <Text style={styles.sampleHint}>
-        Ocular canopy-cover estimate inside the frame (Daubenmire classes:
-        1 = 0–5%, 2 = 5–25%, 3 = 25–50%, 4 = 50–75%, 5 = 75–95%, 6 = 95–100%).
+        Each frame is 1 m². Per-frame grams are summed and averaged, then scaled
+        by the polygon area to estimate the pasture&apos;s total dry matter. Cover
+        is an ocular Daubenmire estimate (classes: 1 = 0–5%, 2 = 5–25%,
+        3 = 25–50%, 4 = 50–75%, 5 = 75–95%, 6 = 95–100%).
       </Text>
     </View>
   )
