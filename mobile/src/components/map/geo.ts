@@ -23,3 +23,24 @@ export function pointInPolygon(lat: number, lng: number, polygon: LatLng[]): boo
   }
   return inside
 }
+
+/**
+ * Approximate area of a lat/lng polygon in acres. Vertices are projected to a
+ * local equirectangular plane (meters) around the polygon's mean latitude and
+ * measured with the shoelace formula — accurate enough for pasture-scale areas.
+ */
+export function polygonAreaAcres(polygon: LatLng[]): number {
+  if (polygon.length < 3) return 0
+  const lat0 = polygon.reduce((sum, p) => sum + p.lat, 0) / polygon.length
+  const cosLat = Math.cos((lat0 * Math.PI) / 180)
+  const xy = polygon.map((p) => ({
+    x: p.lng * 111320 * cosLat,
+    y: p.lat * 110540,
+  }))
+  let area = 0
+  for (let i = 0, j = xy.length - 1; i < xy.length; j = i++) {
+    area += xy[j].x * xy[i].y - xy[i].x * xy[j].y
+  }
+  const squareMeters = Math.abs(area) / 2
+  return squareMeters / 4046.8564224
+}

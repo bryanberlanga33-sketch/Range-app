@@ -11,13 +11,21 @@ import {
   SectionTitle,
 } from '@/components/ui'
 import { DataPointMapper } from '@/components/DataPointMapper'
+import { CarryingCapacityCard } from '@/components/CarryingCapacityCard'
 import type { DataPoint } from '@/components/map/types'
+import { polygonAreaAcres } from '@/components/map/geo'
 import { useCollection } from '@/store/useCollection'
 import {
   locationVertices,
+  type Herd,
   type JournalEntry,
   type LocationRecord,
 } from '@/models'
+import {
+  estimateCarryingCapacity,
+  herdAnimalUnits,
+  summarizeSamples,
+} from '@/lib/carryingCapacity'
 import { pickImage } from '@/photo'
 import { colors, spacing } from '@/theme'
 
@@ -32,12 +40,15 @@ function formatDate(ts: number) {
 export default function JournalScreen() {
   const { items, add, remove } = useCollection<JournalEntry>('journal-entries')
   const { items: locations } = useCollection<LocationRecord>('locations')
+  const { items: herds } = useCollection<Herd>('livestock-herds')
 
   const [title, setTitle] = useState('')
   const [conditions, setConditions] = useState('')
   const [locationId, setLocationId] = useState<string | null>(null)
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([])
   const [photoUri, setPhotoUri] = useState<string | null>(null)
+  const [useFactorPct, setUseFactorPct] = useState(25)
+  const [grazingDays, setGrazingDays] = useState(30)
   const [error, setError] = useState<string | null>(null)
 
   const polygons = useMemo(
@@ -51,6 +62,10 @@ export default function JournalScreen() {
   const boundary = useMemo(
     () => (selected ? locationVertices(selected) : []),
     [selected],
+  )
+  const pastureHerds = useMemo(
+    () => (selected ? herds.filter((h) => h.pastureId === selected.id) : []),
+    [herds, selected],
   )
 
   function selectPolygon(id: string) {
@@ -163,6 +178,18 @@ export default function JournalScreen() {
           />
         )}
 
+        {selected && (
+          <CarryingCapacityCard
+            boundary={boundary}
+            dataPoints={dataPoints}
+            herds={pastureHerds}
+            useFactorPct={useFactorPct}
+            grazingDays={grazingDays}
+            onChangeUseFactor={setUseFactorPct}
+            onChangeGrazingDays={setGrazingDays}
+          />
+        )}
+
         <View style={{ gap: 6 }}>
           <Text style={styles.label}>Property photo (optional)</Text>
           {photoUri ? (
@@ -207,6 +234,25 @@ export default function JournalScreen() {
                     : ''
                 }`,
               )
+            }
+            if (entry.locationId) {
+              const loc = locations.find((l) => l.id === entry.locationId)
+              const cap = estimateCarryingCapacity({
+                areaAcres: loc ? polygonAreaAcres(locationVertices(loc)) : 0,
+                summary: summarizeSamples(pts),
+                useFactorPct: 25,
+                grazingDays: 30,
+                herdAU: herdAnimalUnits(
+                  herds.filter((h) => h.pastureId === entry.locationId),
+                ),
+              })
+              if (cap.computable && cap.aums !== undefined) {
+                metaParts.push(
+                  `🐂 ${cap.aums.toFixed(1)} AUMs (~${(
+                    cap.animalUnitsForPeriod ?? 0
+                  ).toFixed(1)} AU/30d)`,
+                )
+              }
             }
             return (
               <RecordItem

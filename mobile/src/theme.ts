@@ -9,6 +9,8 @@ export const colors = {
   accentSoft: '#e3eade',
   danger: '#9b3b28',
   sky: '#3f5340',
+  burntOrange: '#b5521e',
+  burntOrangeDark: '#94400f',
 }
 
 export const spacing = {

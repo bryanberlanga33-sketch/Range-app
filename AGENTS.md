@@ -24,6 +24,11 @@ are persisted on-device via AsyncStorage (uses `localStorage` when run on web).
 - Routing is file-based via expo-router under `mobile/src/app/` (the `@/*` path alias
   maps to `mobile/src/*`). Add a screen by creating a file there and registering it in
   `src/app/_layout.tsx`.
+- Gotcha: Metro resolves the `@/*` alias from `tsconfig.json` at startup. Creating a
+  brand-new top-level folder under `src/` (e.g. `src/lib/`) while `npm run web` is
+  already running makes imports from it fail to resolve (routes 500 with
+  "Unable to resolve module @/..."). Restart the dev server after adding a new alias
+  root; editing files in folders that already existed hot-reloads fine.
 - On-device data is stored under AsyncStorage keys `journal-entries`, `locations`,
   `plant-species`, `livestock-herds`, and `wildlife-sightings`. On web this maps to
   `localStorage`; clear those keys to reset state during manual testing.

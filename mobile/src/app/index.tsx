@@ -10,10 +10,10 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { PastureLive } from '@/components/PastureLive'
+import { MenuButton } from '@/components/SideMenu'
 import { colors, spacing } from '@/theme'
 
-const CLY_LOGO = require('../../assets/images/cly-logo.png')
+const CLY_LOGO = require('../../assets/images/cly-logo-clay.png')
 
 interface NavItem {
   href: '/journal' | '/location' | '/plants' | '/wildlife'
@@ -87,6 +87,7 @@ function NavCard({ item }: { item: NavItem }) {
 }
 
 export default function Landing() {
+  const router = useRouter()
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.title = 'CLY'
@@ -96,6 +97,9 @@ export default function Landing() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.topBar}>
+          <MenuButton />
+        </View>
         <View style={styles.header}>
           <Image
             source={CLY_LOGO}
@@ -118,7 +122,21 @@ export default function Landing() {
           ))}
         </View>
 
-        <PastureLive />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open My Pasture Live"
+          onPress={() => router.push('/pasture-live')}
+          style={({ pressed }) => [styles.liveCard, pressed && styles.liveCardPressed]}
+        >
+          <Text style={styles.liveEmoji}>📊</Text>
+          <View style={styles.flex}>
+            <Text style={styles.liveTitle}>My Pasture Live</Text>
+            <Text style={styles.liveDescription} numberOfLines={2}>
+              Search & browse every pasture’s journals, plants, livestock & wildlife
+            </Text>
+          </View>
+          <Text style={styles.liveArrow}>›</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   )
@@ -136,11 +154,11 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  topBar: { alignItems: 'flex-end', marginBottom: -spacing.sm },
   header: { gap: spacing.xs },
   logo: {
-    width: 300,
-    height: 139,
-    marginLeft: -4,
+    width: 248,
+    height: 123,
   },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },
   grid: { flexDirection: 'row', gap: spacing.md },
@@ -153,6 +171,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardPressed: { opacity: 0.9 },
+  liveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.burntOrange,
+    borderColor: colors.burntOrangeDark,
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: spacing.lg,
+  },
+  liveCardPressed: { backgroundColor: colors.burntOrangeDark },
+  liveEmoji: { fontSize: 30 },
+  liveTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  liveDescription: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  liveArrow: { fontSize: 28, color: 'rgba(255,255,255,0.9)', fontWeight: '300' },
   cardEmoji: { fontSize: 34, position: 'absolute', top: spacing.lg, left: spacing.lg },
   cardTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   cardDescription: {
