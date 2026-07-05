@@ -11,6 +11,7 @@ import {
 import { Badge } from './ui'
 import { categoryBadge, forageBadge } from './plantBadges'
 import { PastureTrends } from './PastureTrends'
+import { PlantComposition } from './PlantComposition'
 import { polygonAreaAcres } from './map/geo'
 import { useCollection } from '@/store/useCollection'
 import {
@@ -378,6 +379,7 @@ function PastureSheet({
               )}
 
               {s.journals.length > 0 && <PastureTrends journals={s.journals} />}
+              {s.plants.length > 0 && <PlantComposition plants={s.plants} />}
             </>
           )}
         </View>

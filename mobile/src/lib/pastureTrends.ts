@@ -1,4 +1,4 @@
-import type { JournalEntry } from '@/models'
+import type { JournalEntry, PlantRecord } from '@/models'
 import type { FrameSample } from '@/components/map/types'
 import { G_PER_M2_TO_LB_PER_ACRE } from './carryingCapacity'
 
@@ -253,3 +253,104 @@ export function analyzePasture(journals: JournalEntry[]): TrendReport {
     suggestions: observations.length === 0 ? [] : buildSuggestions(metrics),
   }
 }
+
+// --- Plant composition analysis -------------------------------------------
+
+export interface PlantComposition {
+  total: number
+  counts: { Great: number; Good: number; Fair: number; Bad: number }
+  /** Distinct Good/Great species count. */
+  desirableSpecies: number
+  /** Distinct undesirable (Bad/Fair) common names. */
+  undesirableNames: string[]
+  suggestions: string[]
+}
+
+function uniq(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)))
+}
+
+function buildPlantSuggestions(
+  plants: PlantRecord[],
+  desirable: PlantRecord[],
+  undesirable: PlantRecord[],
+  counts: PlantComposition['counts'],
+  desirableSpecies: number,
+): string[] {
+  const tips: string[] = []
+  const undesirableNames = uniq(undesirable.map((p) => p.commonName))
+  const hasCat = (list: PlantRecord[], cat: PlantRecord['category']) =>
+    list.some((p) => p.category === cat)
+
+  if (undesirable.length > 0) {
+    const names = undesirableNames.slice(0, 3).join(', ')
+    tips.push(
+      `Decrease less-desirable plants${names ? ` (${names})` : ''}: avoid overgrazing — it bares the ground and lets weeds spread — and hit them with well-timed control before they set seed.`,
+    )
+    if (hasCat(undesirable, 'Brush')) {
+      tips.push(
+        'For brushy/woody species, use targeted browsing (e.g. goats), mechanical removal, prescribed fire, or spot herbicide, then reseed the openings with desirable grasses.',
+      )
+    }
+    if (hasCat(undesirable, 'Forb')) {
+      tips.push(
+        'For weedy forbs, mow or spot-treat before they flower and seed, and keep a vigorous grass stand so they get crowded out.',
+      )
+    }
+    if (hasCat(undesirable, 'Grass')) {
+      tips.push(
+        'For undesirable grasses, graze or hay them hard before seed-set, then reseed with perennial native grasses.',
+      )
+    }
+  }
+
+  if (desirableSpecies < 3 || counts.Great === 0) {
+    tips.push(
+      'Increase the variety of Good/Great forage: interseed or reseed a mix of adapted native grasses and legumes (both warm- and cool-season) matched to your soils and rainfall.',
+    )
+  }
+  if (desirable.length > 0) {
+    tips.push(
+      'Help Good/Great plants multiply: rest pastures through the growing season so they can flower and set seed, and use rotational grazing so livestock cannot repeatedly graze the best plants.',
+    )
+    tips.push(
+      'Add legumes (clovers or native legumes) to lift forage quality and fix natural soil nitrogen, which favors desirable species over weeds.',
+    )
+  }
+  if (tips.length === 0) {
+    tips.push(
+      'Plant composition looks strong — keep it that way with rest and rotation so desirable species keep setting seed.',
+    )
+  }
+  return tips.slice(0, 5)
+}
+
+/** Summarizes a pasture's plant records and suggests how to shift composition. */
+export function analyzePlants(plants: PlantRecord[]): PlantComposition {
+  const counts = { Great: 0, Good: 0, Fair: 0, Bad: 0 }
+  plants.forEach((p) => {
+    if (p.forageValue in counts) counts[p.forageValue as ForageKey] += 1
+  })
+  const desirable = plants.filter(
+    (p) => p.forageValue === 'Good' || p.forageValue === 'Great',
+  )
+  const undesirable = plants.filter(
+    (p) => p.forageValue === 'Bad' || p.forageValue === 'Fair',
+  )
+  const desirableSpecies = uniq(desirable.map((p) => p.commonName)).length
+  return {
+    total: plants.length,
+    counts,
+    desirableSpecies,
+    undesirableNames: uniq(undesirable.map((p) => p.commonName)),
+    suggestions: buildPlantSuggestions(
+      plants,
+      desirable,
+      undesirable,
+      counts,
+      desirableSpecies,
+    ),
+  }
+}
+
+type ForageKey = keyof PlantComposition['counts']
